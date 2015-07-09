@@ -15,7 +15,7 @@ typedef struct tableE {
 		struct {
 			RelAddr raddr;    /* 関数の場合：先頭アドレス */
 			int pars;         /* 関数の場合：パラメタ数 */
-		}f;
+		} f;
 		RelAddr raddr;        /* 変数、パラメタの場合：アドレス */
 	} u;
 } TabelE;
