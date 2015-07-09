@@ -1,0 +1,7 @@
+var n;
+begin
+  n := 0;
+  unless n = 0 then write 0;
+  unless n = 1 then write 1;
+  writeln
+end.

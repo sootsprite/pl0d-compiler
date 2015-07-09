@@ -1,0 +1,12 @@
+procedure print_whether_even_or_not(n)
+begin
+  if odd n then
+    write 0;
+  else
+    write 1
+end;
+
+begin
+  n := 1;
+  cal print_whether_even_or_not(n)
+end.
