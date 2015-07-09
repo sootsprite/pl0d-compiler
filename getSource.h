@@ -11,9 +11,10 @@
 /* キーや文字の種類(名前) */
 typedef enum keys {
 	Begin, End,                     /* 予約語の名前 */
-	If, Then,
+	If, Then, Else,
 	Unless,
 	While, Do,
+	Repeat, Until,
 	Ret, Func,
 	Var, Const, Odd,
 	Write, WriteLn,

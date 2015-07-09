@@ -186,7 +186,16 @@ void statement()
 			token = checkGet(token, Then);            /* "then"のはず */
 			backP = genCodeV(jpc, 0);                 /* jpc命令 */
 			statement();                              /* 文のコンパイル */
-			backPatch(backP);                         /* 上のjpc命令にバックパッチ */
+			if (token.kind == Else) {
+				token = nextToken();
+				backP2 = genCodeV(jmp, 0);
+				backPatch(backP);
+				statement();
+				backPatch(backP2);
+			}
+			else {
+				backPatch(backP);
+			}
 			return;
 		case Unless:
 			token = nextToken();
@@ -235,14 +244,22 @@ void statement()
 			backPatch(backP);                         /* 偽のとき飛び出すjpc命令へのバックパッチ */
 			return;
 		case Do:
-			backP = nextCode();
 			token = nextToken();
+			backP = nextCode();
 			statement();
 			token = checkGet(token, While);
 			condition();
 			backP2 = genCodeV(jpc, 0);
 			genCodeV(jmp, backP);
 			backPatch(backP2);
+			return;
+		case Repeat:
+			token = nextToken();
+			backP = nextCode();
+			statement();
+			token = checkGet(token, Until);
+			condition();
+			genCodeV(jpc, backP);
 			return;
 		case Write:                                   /* write文のコンパイル */
 			token = nextToken();
@@ -268,10 +285,16 @@ void statement()
 int isStBeginKey(Token t)
 {
 	switch (t.kind) {
+	case Begin:
+	case Do:
 	case Id:
-	case If: case Begin: case Ret:
+	case If:
+	case Repeat:
+	case Ret:
 	case Unless:
-	case While: case Write: case WriteLn:
+	case While:
+	case Write:
+	case WriteLn:
 		return 1;
 	default:
 		return 0;
