@@ -1,0 +1,649 @@
+diff --git a/Makefile b/Makefile
+index aafeecf..b698611 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,8 @@
+ 
+ CC	= gcc
+-CFLAGS	=
++#CFLAGS	= 
++#CFLAGS	= -DLATEX
++CFLAGS	= -DTOKEN_HTML
+ LFLAGS	=
+ 
+ OBJS	= codegen.o \
+@@ -20,3 +22,5 @@ pl0d	: ${OBJS}
+ clean	:
+ 	\rm -rf *~ *.o
+ 
++tags:
++	etags *.c *.h
+diff --git a/codegen.c b/codegen.c
+index 1ff94e1..4e6572e 100644
+--- a/codegen.c
++++ b/codegen.c
+@@ -23,10 +23,12 @@ typedef struct inst{				/*
+ 	}u;
+ }Inst;
+ 
++static char ref[MAXCODE];               /* ref[i]が0ならcode[i]は参照されている. */
+ static Inst code[MAXCODE];		/*　目的コードが入る　*/
+ static int cIndex = -1;				/*　最後に生成した命令語のインデックス　*/
+ static void checkMax();	     		 /*　目的コードのインデックスの増加とチェック　*/
+ static void printCode(int i);		/*　命令語の印字　*/
++static void updateRef(int i);
+ 
+ int nextCode()					/*　次の命令語のアドレスを返す　*/
+ {
+@@ -83,13 +85,70 @@ void backPatch(int i)		/*
+ void listCode()			/*　命令語のリスティング　*/
+ {
+ 	int i;
+-	printf("\ncode\n");
++	printf("\n; code\n");
++
++	for(i=0; i<=cIndex; i++){
++	  ref[i] = 0;
++	}
+ 	for(i=0; i<=cIndex; i++){
+-		printf("%3d: ", i);
++	  updateRef(i);
++	}
++	for(i=0; i<=cIndex; i++){
++		if (ref[i]) {
++		  printf("L%3.3d: ", i);
++		} else {
++		  printf("      ", i);
++		}
+ 		printCode(i);
+ 	}
+ }
+ 
++void updateRef(int i)		/*　配列refの更新　*/
++{
++	int flag;
++	switch(code[i].opCode){
++	case lit: flag=1; break;
++	case opr: flag=3; break;
++	case lod: flag=2; break;
++	case sto: flag=2; break;
++	case cal: flag=5; break;
++	case ret: flag=2; break;
++	case ict: flag=1; break;
++	case jmp: flag=4; break;
++	case jpc: flag=4; break;
++	}
++	switch(flag){
++	case 1:
++		return;
++	case 2:
++		ref[code[i].u.addr.addr] = 1;
++		return;
++	case 3:
++		switch(code[i].u.optr){
++		case neg: return;
++		case add: return;
++		case sub: return;
++		case mul: return;
++		case div: return;
++		case odd: return;
++		case eq: return;
++		case ls: return;
++		case gr: return;
++		case neq: return;
++		case lseq: return;
++		case greq: return;
++		case wrt: return;
++		case wrl: return;
++		}
++	case 4:
++		ref[code[i].u.value] = 1;
++		return;
++	case 5:
++		ref[code[i].u.addr.addr] = 1;
++		return;
++	}
++}	
++
+ void printCode(int i)		/*　命令語の印字　*/
+ {
+ 	int flag;
+@@ -98,11 +157,11 @@ void printCode(int i)		/*
+ 	case opr: printf("opr"); flag=3; break;
+ 	case lod: printf("lod"); flag=2; break;
+ 	case sto: printf("sto"); flag=2; break;
+-	case cal: printf("cal"); flag=2; break;
++	case cal: printf("cal"); flag=5; break;
+ 	case ret: printf("ret"); flag=2; break;
+ 	case ict: printf("ict"); flag=1; break;
+-	case jmp: printf("jmp"); flag=1; break;
+-	case jpc: printf("jpc"); flag=1; break;
++	case jmp: printf("jmp"); flag=4; break;
++	case jpc: printf("jpc"); flag=4; break;
+ 	}
+ 	switch(flag){
+ 	case 1:
+@@ -129,6 +188,13 @@ void printCode(int i)		/*
+ 		case wrt: printf(",wrt\n"); return;
+ 		case wrl: printf(",wrl\n"); return;
+ 		}
++	case 4:
++		printf(",L%3.3d\n", code[i].u.value);
++		return;
++	case 5:
++		printf(",%d", code[i].u.addr.level);
++		printf(",L%3.3d\n", code[i].u.addr.addr);
++		return;
+ 	}
+ }	
+ 
+@@ -138,7 +204,7 @@ void execute()			/*
+ 	int display[MAXLEVEL];	/*　現在見える各ブロックの先頭番地のディスプレイ　*/
+ 	int pc, top, lev, temp;
+ 	Inst i;					/*　実行する命令語　*/
+-	printf("start execution\n");
++	printf("; start execution\n");
+ 	top = 0;  pc = 0;			/*　top:次にスタックに入れる場所、pc:命令語のカウンタ　*/
+ 	stack[0] = 0;  stack[1] = 0; 	/*　stack[top]はcalleeで壊すディスプレイの退避場所　*/
+ 						/*　stack[top+1]はcallerへの戻り番地　*/
+diff --git a/compile.c b/compile.c
+index ccc3ba7..0c68b80 100644
+--- a/compile.c
++++ b/compile.c
+@@ -28,7 +28,7 @@ static int isStBeginKey(Token t);		/*
+ int compile()
+ {
+ 	int i;
+-	printf("start compilation\n");
++	printf("; start compilation\n");
+ 	initSource();				/*　getSourceの初期設定　*/
+ 	token = nextToken();			/*　最初のトークン　*/
+ 	blockBegin(FIRSTADDR);		/*　これ以後の宣言は新しいブロックのもの　*/
+@@ -36,7 +36,7 @@ int compile()
+ 	finalSource();
+ 	i = errorN();				/*　エラーメッセージの個数　*/
+ 	if (i!=0)
+-		printf("%d errors\n", i);
++	  printf("; %d errors\n", i);
+ /*	listCode();	*/			/*　目的コードのリスト（必要なら）　*/
+ 	return i<MINERROR;		/*　エラーメッセージの個数が少ないかどうかの判定　*/
+ }
+@@ -237,6 +237,7 @@ void statement()			/*
+ int isStBeginKey(Token t)			/*　トークンtは文の先頭のキーか？　*/
+ {
+ 	switch (t.kind){
++	case Id:
+ 	case If: case Begin: case Ret:
+ 	case While: case Write: case WriteLn:
+ 		return 1;
+diff --git a/do.pl0 b/do.pl0
+new file mode 100644
+index 0000000..1a562a2
+--- /dev/null
++++ b/do.pl0
+@@ -0,0 +1,10 @@
++var x;
++begin
++   x := 0;
++   do begin
++      write x;
++      writeln;
++      x := x + 1
++   end
++   while x < 3
++end.
+diff --git a/else.pl0 b/else.pl0
+new file mode 100755
+index 0000000..96a737a
+--- /dev/null
++++ b/else.pl0
+@@ -0,0 +1,11 @@
++var x;
++begin
++   x := 0;
++   while x<3 do begin
++      if x < 1 then write 0
++      else if x < 2 then write 1
++      else write 2;
++      writeln;
++      x := x+1;
++   end;
++end.
+diff --git a/getSource.c b/getSource.c
+index 50ba69d..8b1996d 100644
+--- a/getSource.c
++++ b/getSource.c
+@@ -114,7 +114,13 @@ int openSource(char fileName[]) 		/*
+ 		return 0;
+ 	}
+ 	strcpy(fileNameO, fileName);
+-	strcat(fileNameO,".html");  /* strcat(fileNameO,".tex"); */
++#if defined(LATEX)
++	strcat(fileNameO,".tex");
++#elif defined(TOKEN_HTML)
++	strcat(fileNameO,".html");
++#else
++	strcat(fileNameO,".html");
++#endif
+ 	if ( (fptex = fopen(fileNameO,"w")) == NULL ) {	 /*　.html（または.tex）ファイルを作る　*/
+ 		printf("can't open %s\n", fileNameO);
+ 		return 0;
+@@ -134,17 +140,22 @@ void initSource()
+ 	ch = '\n';
+ 	printed = 1;
+ 	initCharClassT();
+-	fprintf(fptex,"<HTML>\n");   /*　htmlコマンド　*/
+-	fprintf(fptex,"<HEAD>\n<TITLE>compiled source program</TITLE>\n</HEAD>\n");
+-	fprintf(fptex,"<BODY>\n<PRE>\n");
+-/*  　LaTeXコマンド　
++#if defined(LATEX)
+ 	fprintf(fptex,"\\documentstyle[12pt]{article}\n");   
+ 	fprintf(fptex,"\\begin{document}\n");
+ 	fprintf(fptex,"\\fboxsep=0pt\n");
+ 	fprintf(fptex,"\\def\\insert#1{$\\fbox{#1}$}\n");
+ 	fprintf(fptex,"\\def\\delete#1{$\\fboxrule=.5mm\\fbox{#1}$}\n");
+ 	fprintf(fptex,"\\rm\n");
+-*/
++#elif defined(TOKEN_HTML)
++	fprintf(fptex,"<HTML>\n");   /*　htmlコマンド　*/
++	fprintf(fptex,"<HEAD>\n<TITLE>compiled source program</TITLE>\n</HEAD>\n");
++	fprintf(fptex,"<BODY>\n<PRE>\n");
++#else
++	fprintf(fptex,"<HTML>\n");   /*　htmlコマンド　*/
++	fprintf(fptex,"<HEAD>\n<TITLE>compiled source program</TITLE>\n</HEAD>\n");
++	fprintf(fptex,"<BODY>\n<PRE>\n");
++#endif
+ }
+ 
+ void finalSource()
+@@ -153,8 +164,13 @@ void finalSource()
+ 		printcToken();
+ 	else
+ 		errorInsert(Period);
++#if defined(LATEX)
++	fprintf(fptex,"\n\\end{document}\n");
++#elif defined(TOKEN_HTML)
++	fprintf(fptex,"\n</PRE>\n</BODY>\n</HTML>\n");
++#else
+ 	fprintf(fptex,"\n</PRE>\n</BODY>\n</HTML>\n");
+-	/* 	fprintf(fptex,"\n\\end{document}\n"); */
++#endif
+ }
+ 	
+ /*　通常のエラーメッセージの出力の仕方（参考まで）　*/
+@@ -178,9 +194,14 @@ void error(char *m)
+ void errorNoCheck()			/*　エラーの個数のカウント、多すぎたら終わり　*/
+ {
+ 	if (errorNo++ > MAXERROR){
++#if defined(LATEX)
++	        fprintf(fptex, "too many errors\n\\end{document}\n");
++#elif defined(TOKEN_HTML)
+ 		fprintf(fptex, "too many errors\n</PRE>\n</BODY>\n</HTML>\n");
+-		/* fprintf(fptex, "too many errors\n\\end{document}\n"); */
+-		printf("abort compilation\n");	
++#else
++		fprintf(fptex, "too many errors\n</PRE>\n</BODY>\n</HTML>\n");
++#endif
++		printf("; abort compilation\n");	
+ 		exit (1);
+ 	}
+ }
+@@ -188,34 +209,70 @@ void errorNoCheck()			/*
+ void errorType(char *m)		/*　型エラーを.html（または.tex）ファイルに出力　*/
+ {
+ 	printSpaces();
++#if defined(LATEX)
++	fprintf(fptex, "\\(\\stackrel{\\mbox{\\scriptsize %s}}{\\mbox{", m);
++	printcToken();
++	fprintf(fptex, "}}\\)");
++#elif defined(TOKEN_HTML)
++	fprintf(fptex, "<FONT COLOR=%s>", TYPE_C);
++	fprintf(fptex, "TypeError(%s)-&gt", m);
++	printcToken();
++	fprintf(fptex, "</FONT>");
++#else
+ 	fprintf(fptex, "<FONT COLOR=%s>%s</FONT>", TYPE_C, m);
+-	/* fprintf(fptex, "\\(\\stackrel{\\mbox{\\scriptsize %s}}{\\mbox{", m); */
+ 	printcToken();
+-	/* fprintf(fptex, "}}\\)"); */
++#endif
+ 	errorNoCheck();
+ }
+ 
+ void errorInsert(KeyId k)		/*　keyString(k)を.html（または.tex）ファイルに挿入　*/
+ {
++#if defined(LATEX)
++         if (k < end_of_KeyWd) 	/*　予約語　*/
++	   fprintf(fptex, "\\ \\insert{{\\bf %s}}", KeyWdT[k].word); 
++	 else 					/*　演算子か区切り記号　*/
++	   fprintf(fptex, "\\ \\insert{$%s$}", KeyWdT[k].word);
++#elif defined(TOKEN_HTML)
++	fprintf(fptex, "<FONT COLOR=%s>", INSERT_C);
++        fprintf(fptex, "insert ");
++         if (k < end_of_KeyWd) 	/*　予約語　*/
++	   fprintf(fptex, "(Keyword, '%s')", KeyWdT[k].word);
++	 else 					/*　演算子か区切り記号　*/
++	   fprintf(fptex, "(Symbol, '%s')", KeyWdT[k].word);
++	fprintf(fptex, "</FONT>");
++#else
+ 	fprintf(fptex, "<FONT COLOR=%s><b>%s</b></FONT>", INSERT_C, KeyWdT[k].word);
+-	// 	if (k < end_of_KeyWd) 	/*　予約語　*/
+-	//		 fprintf(fptex, "\\ \\insert{{\\bf %s}}", KeyWdT[k].word); 
+-	//	else 					/*　演算子か区切り記号　*/
+-	//	fprintf(fptex, "\\ \\insert{$%s$}", KeyWdT[k].word); */
++#endif
+ 	errorNoCheck();
+ }
+ 
+ void errorMissingId()			/*　名前がないとのメッセージを.html（または.tex）ファイルに挿入　*/
+ {
++#if defined(LATEX)
++        fprintf(fptex, "\\insert{Id}"); 
++#elif defined(TOKEN_HTML)
++	fprintf(fptex, "<FONT COLOR=%s>", INSERT_C);
++        fprintf(fptex, "insert ");
++	fprintf(fptex, "(Id, identifier)");
++	fprintf(fptex, "</FONT>");
++#else
+ 	fprintf(fptex, "<FONT COLOR=%s>Id</FONT>", INSERT_C);
+-	/* fprintf(fptex, "\\insert{Id}"); */
++#endif
+ 	errorNoCheck();
+ }
+ 
+ void errorMissingOp()		/*　演算子がないとのメッセージを.html（または.tex）ファイルに挿入　*/
+ {
++#if defined(LATEX)
++	fprintf(fptex, "\\insert{$\\otimes$}");
++#elif defined(TOKEN_HTML)
++	fprintf(fptex, "<FONT COLOR=%s>", INSERT_C);
++        fprintf(fptex, "insert ");
++	fprintf(fptex, "(Symbol, operator)");
++	fprintf(fptex, "</FONT>");
++#else
+ 	fprintf(fptex, "<FONT COLOR=%s>@</FONT>", INSERT_C);
+-	/* fprintf(fptex, "\\insert{$\\otimes$}"); */
++#endif
+ 	errorNoCheck();
+ }
+ 
+@@ -224,35 +281,76 @@ void errorDelete()			/*
+ 	int i=(int)cToken.kind;
+ 	printSpaces();
+ 	printed = 1;
+-	if (i < end_of_KeyWd) 							/*　予約語　*/
++#if defined(LATEX)
++	if (i < end_of_KeyWd) {							/*　予約語　*/
++	        fprintf(fptex, "\\delete{{\\bf %s}}", KeyWdT[i].word);
++	} else if (i < end_of_KeySym) {					/*　演算子か区切り記号　*/
++		fprintf(fptex, "\\delete{$%s$}", KeyWdT[i].word);
++	} else if (i==(int)Id) {						/*　Identfier　*/
++		fprintf(fptex, "\\delete{%s}", cToken.u.id);
++	} else if (i==(int)Num) {							/*　Num　*/
++		fprintf(fptex, "\\delete{%d}", cToken.u.value);
++	}
++#elif defined(TOKEN_HTML)
++	if (i < end_of_KeyWd) {							/*　予約語　*/
++	        fprintf(fptex, "<FONT COLOR=%s>", DELETE_C);
++		fprintf(fptex, "delete ");
++		fprintf(fptex, "(Keyword, '%s')", KeyWdT[i].word);
++                fprintf(fptex, "</FONT>");
++	} else if (i < end_of_KeySym) {					/*　演算子か区切り記号　*/
++	        fprintf(fptex, "<FONT COLOR=%s>", DELETE_C);
++		fprintf(fptex, "delete ");
++		fprintf(fptex, "(Symbol, '%s')", KeyWdT[i].word);
++                fprintf(fptex, "</FONT>");
++	} else if (i==(int)Id) {						/*　Identfier　*/
++	        fprintf(fptex, "<FONT COLOR=%s>", DELETE_C);
++		fprintf(fptex, "delete ");
++		fprintf(fptex, "(Id, '%s')", cToken.u.id);
++                fprintf(fptex, "</FONT>");
++	} else if (i==(int)Num) {							/*　Num　*/
++	        fprintf(fptex, "<FONT COLOR=%s>", DELETE_C);
++		fprintf(fptex, "delete ");
++		fprintf(fptex, "(number, '%d')", cToken.u.value);
++                fprintf(fptex, "</FONT>");
++	}
++#else 
++	if (i < end_of_KeyWd) {							/*　予約語　*/
+ 		fprintf(fptex, "<FONT COLOR=%s><b>%s</b></FONT>", DELETE_C, KeyWdT[i].word);
+-		/* fprintf(fptex, "\\delete{{\\bf %s}}", KeyWdT[i].word); */
+-	else if (i < end_of_KeySym)					/*　演算子か区切り記号　*/
++	} else if (i < end_of_KeySym) {					/*　演算子か区切り記号　*/
+ 		fprintf(fptex, "<FONT COLOR=%s>%s</FONT>", DELETE_C, KeyWdT[i].word);
+-		/* fprintf(fptex, "\\delete{$%s$}", KeyWdT[i].word); */
+-	else if (i==(int)Id)								/*　Identfier　*/
++	} else if (i==(int)Id) {						/*　Identfier　*/
+ 		fprintf(fptex, "<FONT COLOR=%s>%s</FONT>", DELETE_C, cToken.u.id);
+-		/* fprintf(fptex, "\\delete{%s}", cToken.u.id); */
+-	else if (i==(int)Num)								/*　Num　*/
++	} else if (i==(int)Num) {							/*　Num　*/
+ 		fprintf(fptex, "<FONT COLOR=%s>%d</FONT>", DELETE_C, cToken.u.value);
+-		/* fprintf(fptex, "\\delete{%d}", cToken.u.value); */
++	}
++#endif
+ }
+ 
+ void errorMessage(char *m)	/*　エラーメッセージを.html（または.tex）ファイルに出力　*/
+ {
++#if defined(LATEX)
++	fprintf(fptex, "$^{%s}$", m);
++#elif defined(TOKEN_HTML)
+ 	fprintf(fptex, "<FONT COLOR=%s>%s</FONT>", TYPE_C, m);
+-	/* fprintf(fptex, "$^{%s}$", m); */
++#else
++	fprintf(fptex, "<FONT COLOR=%s>%s</FONT>", TYPE_C, m);
++#endif
+ 	errorNoCheck();
+ }
+ 
+ void errorF(char *m)			/*　エラーメッセージを出力し、コンパイル終了　*/
+ {
+ 	errorMessage(m);
++#if defined(LATEX)
++	fprintf(fptex, "fatal errors\n\\end{document}\n");
++#elif defined(TOKEN_HTML)
++	fprintf(fptex, "fatal errors\n</PRE>\n</BODY>\n</HTML>\n");
++#else
+ 	fprintf(fptex, "fatal errors\n</PRE>\n</BODY>\n</HTML>\n");
+-	/* fprintf(fptex, "fatal errors\n\\end{document}\n"); */
++#endif
+ 	if (errorNo)
+-		printf("total %d errors\n", errorNo);
+-	printf("abort compilation\n");	
++		printf("; total %d errors\n", errorNo);
++	printf("; abort compilation\n");	
+ 	exit (1);
+ }
+ 
+@@ -391,12 +489,29 @@ Token checkGet(Token t, KeyId k)			/*
+ 
+ static void printSpaces()			/*　空白や改行の印字　*/
+ {
+-	while (CR-- > 0)
++#if defined(LATEX)
++        while (CR-- > 0) {
++		fprintf(fptex, "\\ \\par\n");
++	}
++	while (spaces-- > 0) {
++		fprintf(fptex, " ");
++		fprintf(fptex, "\\ ");
++	}
++#elif defined(TOKEN_HTML)
++        while (CR-- > 0) {
+ 		fprintf(fptex, "\n");
+-		/* fprintf(fptex, "\\ \\par\n"); */
+-	while (spaces-- > 0)
++	}
++	while (spaces-- > 0) {
++		fprintf(fptex, " ");
++	}
++#else
++        while (CR-- > 0) {
++		fprintf(fptex, "\n");
++	}
++	while (spaces-- > 0) {
+ 		fprintf(fptex, " ");
+-		/* fprintf(fptex, "\\ "); */
++	}
++#endif
+ 	CR = 0; spaces = 0;
+ }
+ 
+@@ -408,28 +523,64 @@ void printcToken()				/*
+ 	}
+ 	printed = 1;
+ 	printSpaces();				/*　トークンの前の空白や改行印字　*/
+-	if (i < end_of_KeyWd) 						/*　予約語　*/
++#if defined(LATEX)
++	if (i < end_of_KeyWd) {						/*　予約語　*/
++		fprintf(fptex, "{\\bf %s}", KeyWdT[i].word);
++	} else if (i < end_of_KeySym) {					/*　演算子か区切り記号　*/
++		fprintf(fptex, "$%s$", KeyWdT[i].word);
++	} else if (i==(int)Id){							/*　Identfier　*/
++		switch (idKind) {
++		case varId: 
++			fprintf(fptex, "%s", cToken.u.id); return;
++		case parId: 
++			fprintf(fptex, "{\\sl %s}", cToken.u.id); return;
++		case funcId: 
++			fprintf(fptex, "{\\it %s}", cToken.u.id); return;
++		case constId: 
++			fprintf(fptex, "{\\sf %s}", cToken.u.id); return;
++		}
++	}else if (i==(int)Num) {		/*　Num　*/
++		fprintf(fptex, "%d", cToken.u.value);
++	}
++#elif defined(TOKEN_HTML)
++	if (i < end_of_KeyWd) {						/*　予約語　*/
++		fprintf(fptex, "(Keyword, '%s') ", KeyWdT[i].word);
++	} else if (i < end_of_KeySym) {					/*　演算子か区切り記号　*/
++		fprintf(fptex, "(Symbol, '%s') ", KeyWdT[i].word);
++	} else if (i==(int)Id){							/*　Identfier　*/
++		switch (idKind) {
++		case varId: 
++			fprintf(fptex, "(varId, '%s') ", cToken.u.id); return;
++		case parId: 
++			fprintf(fptex, "(parId, '%s') ", cToken.u.id); return;
++		case funcId: 
++			fprintf(fptex, "(funcId, '%s') ", cToken.u.id); return;
++		case constId: 
++			fprintf(fptex, "(constId, '%s') ", cToken.u.id); return;
++		}
++	}else if (i==(int)Num) {		/*　Num　*/
++		fprintf(fptex, "(number, '%d') ", cToken.u.value);
++	}
++#else
++	if (i < end_of_KeyWd) {						/*　予約語　*/
+ 		fprintf(fptex, "<b>%s</b>", KeyWdT[i].word);
+-		/* fprintf(fptex, "{\\bf %s}", KeyWdT[i].word); */
+-	else if (i < end_of_KeySym)					/*　演算子か区切り記号　*/
++	} else if (i < end_of_KeySym) {					/*　演算子か区切り記号　*/
+ 		fprintf(fptex, "%s", KeyWdT[i].word);
+-		/* fprintf(fptex, "$%s$", KeyWdT[i].word); */
+-	else if (i==(int)Id){							/*　Identfier　*/
++	} else if (i==(int)Id){							/*　Identfier　*/
+ 		switch (idKind) {
+ 		case varId: 
+ 			fprintf(fptex, "%s", cToken.u.id); return;
+ 		case parId: 
+ 			fprintf(fptex, "<i>%s</i>", cToken.u.id); return;
+-			/* fprintf(fptex, "{\\sl %s}", cToken.u.id); return; */
+ 		case funcId: 
+ 			fprintf(fptex, "<i>%s</i>", cToken.u.id); return;
+-			/* fprintf(fptex, "{\\it %s}", cToken.u.id); return; */
+ 		case constId: 
+ 			fprintf(fptex, "<tt>%s</tt>", cToken.u.id); return;
+-			/* fprintf(fptex, "{\\sf %s}", cToken.u.id); return; */
+ 		}
+-	}else if (i==(int)Num)			/*　Num　*/
++	}else if (i==(int)Num) {		/*　Num　*/
+ 		fprintf(fptex, "%d", cToken.u.value);
++	}
++#endif
+ }
+ 
+ void setIdKind (KindT k)			/*　現トークン(Id)の種類をセット　*/
+diff --git a/main.c b/main.c
+index fadc340..bfaa9e3 100644
+--- a/main.c
++++ b/main.c
+@@ -4,15 +4,26 @@
+ #include <stdio.h>
+ #include "getSource.h"
+ 
+-main()
++int main(int argc, char* argv[])
+ {
+-	char fileName[30];		/*　ソースプログラムファイルの名前　*/
+-	printf("enter source file name\n");
+-	scanf("%s", fileName);
+-	if (!openSource(fileName))	/*　ソースプログラムファイルのopen　*/
+-		return;			/*　openに失敗すれば終わり　*/
+-	if (compile())			/*　コンパイルして　*/
+-		execute();			/*　エラーがなければ実行　*/
+-	closeSource();			/*　ソースプログラムファイルのclose　*/
++  if (argc == 2) {
++    /* pl0d src */
++    if (!openSource(argv[1]))
++      return;
++    if (compile()){
++      execute();
++    }
++    closeSource();			/*　ソースプログラムファイルのclose　*/
++  } else if  (argc == 3 && strcmp(argv[1], "-l") == 0) {
++    /* pl0d -l src */
++    if (!openSource(argv[2]))
++      return;
++    if (compile()){
++      listCode();
++    }
++    closeSource();			/*　ソースプログラムファイルのclose　*/
++  } else {
++    printf("pl0d [-l] src\n");
++  }
++  return 0;
+ }
+-
+diff --git a/repeat.pl0 b/repeat.pl0
+new file mode 100644
+index 0000000..649f487
+--- /dev/null
++++ b/repeat.pl0
+@@ -0,0 +1,10 @@
++var x;
++begin
++   x := 0;
++   repeat begin
++      write x; 
++      writeln;
++      x := x + 1
++   end
++   until x=3
++end.
+diff --git a/test.txt b/test.txt
+new file mode 100644
+index 0000000..bbc03d5
+--- /dev/null
++++ b/test.txt
+@@ -0,0 +1,20 @@
++% ./pl0d do.pl0
++start compilation
++start execution
++0
++1 
++2 
++
++% ./pl0d repeat.pl0
++start compilation
++start execution
++0 
++1 
++2 
++
++% ./pl0d else.pl0
++start compilation
++start execution
++0 
++1 
++2 

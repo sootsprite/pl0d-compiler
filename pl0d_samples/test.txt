@@ -1,0 +1,20 @@
+% ./pl0d do.pl0
+start compilation
+start execution
+0
+1 
+2 
+
+% ./pl0d repeat.pl0
+start compilation
+start execution
+0 
+1 
+2 
+
+% ./pl0d else.pl0
+start compilation
+start execution
+0 
+1 
+2 

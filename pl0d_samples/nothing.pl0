@@ -1,0 +1,6 @@
+begin
+  write 1;
+  writeln;
+  write 1 + 1;
+  writeln;
+end.
