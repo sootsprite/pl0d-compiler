@@ -4,7 +4,8 @@
 
 /* 命令語のコード */
 typedef enum codes {
-	lit, opr, lod, sto, cal, ret, ict, jmp, jpc
+	lit, opr, lod, sto, cal, ret, ict, jmp, jpc,
+	loda, stoa
 } OpCode;
 
 /* 演算命令のコード */

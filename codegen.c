@@ -92,19 +92,15 @@ void listCode()
 	int i;
 	printf("\n; code\n");
 
-	for(i = 0; i <= cIndex; i++) {
+	for(i = 0; i <= cIndex; i++)
 		ref[i] = 0;
-	}
-	for(i = 0; i <= cIndex; i++) {
+	for(i = 0; i <= cIndex; i++)
 		updateRef(i);
-	}
 	for(i = 0; i <= cIndex; i++) {
-		if (ref[i]) {
+		if (ref[i])
 			printf("L%3.3d: ", i);
-		}
-		else {
+		else
 			printf("      ");
-		}
 		printCode(i);
 	}
 }
@@ -170,6 +166,8 @@ void printCode(int i)
 	case ict: printf("ict"); flag = 1; break;
 	case jmp: printf("jmp"); flag = 4; break;
 	case jpc: printf("jpc"); flag = 4; break;
+	case loda: printf("loda"); flag = 2; break;
+	case stoa: printf("stoa"); flag = 2; break;
 	}
 	switch(flag) {
 	case 1:
@@ -273,6 +271,12 @@ void execute()
 			case wrt: printf("%d ", stack[--top]); continue;
 			case wrl: printf("\n"); continue;
 			}
+		case loda:
+			stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr];
+			break;
+		case stoa:
+			stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top];
+			break;
 		}
 	} while (pc != 0);
 }
