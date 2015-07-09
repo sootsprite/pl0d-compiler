@@ -1,4 +1,6 @@
+*.exe
 *.html
 *.o
+*.out
 /pl0d
 /tags
