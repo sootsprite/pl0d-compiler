@@ -106,13 +106,15 @@ void varDecl()
 			setIdKind(varId);              /* 印字のための情報のセット */
 			enterTvar(token.u.id);         /* 変数名をテーブルに、番地はtableが決める */
 			token = nextToken();
-		}else
+		}
+		else
 			errorMissingId();
 		if (token.kind != Comma) {         /* 次がコンマなら変数宣言が続く */
 			if (token.kind == Id) {        /* 次が名前ならコンマを忘れたことにする */
 				errorInsert(Comma);
 				continue;
-			}else
+			}
+			else
 				break;
 		}
 		token = nextToken();
@@ -286,7 +288,8 @@ void expression()
 		term();
 		if (k == Minus)
 			genCodeO(neg);
-	}else
+	}
+	else
 		term();
 	k = token.kind;
 	while (k == Plus || k == Minus) {
@@ -356,7 +359,7 @@ void factor()
 				if (pars(tIndex) != i)
 					errorMessage("\\#par");           /* pars(tIndex)は仮引数の個数 */
 			}
-			else{
+			else {
 				errorInsert(Lparen);
 				errorInsert(Rparen);
 			}

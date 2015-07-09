@@ -1,4 +1,4 @@
-/********** codegen.c ************/
+/********** codegen.c **********/
 #include <stdio.h>
 #include "codegen.h"
 #include "table.h"
@@ -29,7 +29,7 @@ static void updateRef(int i);
 /* 次の命令語のアドレスを返す */
 int nextCode()
 {
-	return cIndex+1;
+	return cIndex + 1;
 }
 
 /* 命令語の生成、アドレス部にv */
@@ -247,7 +247,7 @@ void execute()
 			break;
 		case ict:
 			top += i.u.value;
-			if (top >= MAXMEM-MAXREG)
+			if (top >= MAXMEM - MAXREG)
 				errorF("stack overflow");
 			break;
 		case jmp:

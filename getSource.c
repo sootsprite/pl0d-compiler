@@ -1,4 +1,4 @@
-/********** getSource.c *********/
+/********** getSource.c **********/
 #include <stdio.h>
 #include <string.h>
 #include "getSource.h"
@@ -191,7 +191,7 @@ void finalSource()
  *         printf("^\n");
  *     printf("*** error *** %s\n", m);
  *     errorNo++;
- *     if (errorNo > MAXERROR){
+ *     if (errorNo > MAXERROR) {
  *         printf("too many errors\n");
  *         printf("abort compilation\n");
  *         exit (1);
@@ -405,7 +405,7 @@ int errorN()
 char nextChar()
 {
 	char ch;
-	if (lineIndex == -1){
+	if (lineIndex == -1) {
 		if (fgets(line, MAXLINE, fpi) != NULL) {
 			// puts(line);                     /* 通常のエラーメッセージの出力の場合(参考まで) */
 			lineIndex = 0;
@@ -435,7 +435,7 @@ Token nextToken()
 			spaces++;
 		else if	(ch == '\t')
 			spaces += TAB;
-		else if (ch == '\n'){
+		else if (ch == '\n') {
 			spaces = 0;  CR++;
 		}
 		else break;
@@ -648,7 +648,7 @@ void printcToken()
 		fprintf(fptex, "%s", KeyWdT[i].word);
 	}
 	/* Identfier */
-	else if (i == (int)Id){
+	else if (i == (int)Id) {
 		switch (idKind) {
 		case varId:
 			fprintf(fptex, "%s", cToken.u.id);
