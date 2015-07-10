@@ -7,6 +7,8 @@ begin
 end;
 
 begin
-  n := 1;
-  cal print_whether_even_or_not(n)
+  call print_whether_even_or_not(0)
+  call print_whether_even_or_not(1)
+  call print_whether_even_or_not(2)
+  call print_whether_even_or_not(3)
 end.
