@@ -272,10 +272,12 @@ void execute()
 			case wrl: printf("\n"); continue;
 			}
 		case loda:
-			stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr];
+			--top;
+			stack[top] = stack[display[i.u.addr.level] + i.u.addr.addr + stack[--top]];
 			break;
 		case stoa:
-			stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top];
+			--top;
+			stack[display[i.u.addr.level] + i.u.addr.addr + stack[--top]] = stack[top];
 			break;
 		}
 	} while (pc != 0);
