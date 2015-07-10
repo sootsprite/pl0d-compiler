@@ -53,6 +53,7 @@ static struct keyWd KeyWdT[] = {
 	{"var", Var},
 	{"const", Const},
 	{"odd", Odd},
+	{"procedure", Proc},
 	{"write", Write},
 	{"writeln",WriteLn},
 	{"$dummy1",end_of_KeyWd},

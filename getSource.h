@@ -17,6 +17,7 @@ typedef enum keys {
 	Repeat, Until,
 	Ret, Func,
 	Var, Const, Odd,
+	Proc,
 	Write, WriteLn,
 	end_of_KeyWd,                   /* 予約語の名前はここまで */
 	Plus, Minus,                    /* 演算子と区切り記号の名前 */
