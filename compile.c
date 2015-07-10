@@ -12,6 +12,7 @@ static void block(int pIndex);       /* ブロックのコンパイル (pIndex�
 static void constDecl();             /* 定数宣言のコンパイル */
 static void varDecl();               /* 変数宣言のコンパイル */
 static void funcDecl();              /* 関数宣言のコンパイル */
+static void procDecl();              /* 手続き宣言のコンパイル */
 static void statement();             /* 文のコンパイル */
 static void expression();            /* 式のコンパイル */
 static void term();                  /* 式の項のコンパイル */
@@ -55,6 +56,9 @@ void block(int pIndex)
 			token = nextToken();
 			funcDecl();
 			continue;
+		case Proc:
+			token = nextToken();
+			procDecl();
 		default:    /* それ以外なら宣言部は終わり */
 			break;
 		}
@@ -162,6 +166,43 @@ void funcDecl()
 		errorMissingId();                               /* 関数名がない */
 }
 
+/* 手続き宣言のコンパイル */
+void procDecl()
+{
+	int fIndex;
+	if (token.kind == Id) {
+		token = checkGet(nextToken(), Lparen);
+		while(1) {
+			if (token.kind == Id) {                     /* パラメタ名がある場合 */
+				setIdKind(parId);                       /* 印字のための情報のセット */
+				enterTpar(token.u.id);                  /* パラメタ名をテーブルに登録 */
+				token = nextToken();
+			}
+			else
+				break;
+			if (token.kind != Comma) {                  /* 次がコンマならパラメタ名が続く */
+				if (token.kind == Id) {                 /* 次が名前ならコンマを忘れたことに */
+					errorInsert(Comma);
+					continue;
+				}
+				else
+					break;
+			}
+			token = nextToken();
+		}
+		token = checkGet(token, Rparen);
+		endpar();
+		if (token.kind == Semicolon) {
+			errorDelete();
+			token = nextToken();
+		}
+		block(fIndex);
+		token = checkGet(token, Semicolon);
+	}
+	else
+		errorMissingId();
+}
+
 /* 文のコンパイル */
 void statement()
 {
@@ -193,9 +234,8 @@ void statement()
 				statement();
 				backPatch(backP2);
 			}
-			else {
+			else
 				backPatch(backP);
-			}
 			return;
 		case Unless:
 			token = nextToken();
