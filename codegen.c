@@ -232,14 +232,14 @@ void execute()
 		case cal:
 			lev = i.u.addr.level + 1;                     /* i.u.addr.levelはcalleeの名前のレベル calleeのブロックのレベルlevはそれに+1したもの */
 			stack[top] = display[lev];                    /* display[lev]の退避 */
-			stack[top+1] = pc; display[lev] = top;        /* 現在のtopがcalleeのブロックの先頭番地 */
+			stack[top + 1] = pc; display[lev] = top;        /* 現在のtopがcalleeのブロックの先頭番地 */
 			pc = i.u.addr.addr;
 			break;
 		case ret:
 			temp = stack[--top];                          /* スタックのトップにあるものが返す値 */
 			top = display[i.u.addr.level];                /* topを呼ばれたときの値に戻す */
 			display[i.u.addr.level] = stack[top];         /* 壊したディスプレイの回復 */
-			pc = stack[top+1];
+			pc = stack[top + 1];
 			top -= i.u.addr.addr;                         /* 実引数の分だけトップを戻す */
 			stack[top++] = temp;                          /* 返す値をスタックのトップへ */
 			break;
@@ -256,28 +256,28 @@ void execute()
 			break;
 		case opr:
 			switch(i.u.optr) {
-			case neg: stack[top-1] = -stack[top-1]; continue;
-			case add: --top;  stack[top-1] += stack[top]; continue;
-			case sub: --top; stack[top-1] -= stack[top]; continue;
-			case mul: --top;  stack[top-1] *= stack[top];  continue;
-			case div: --top;  stack[top-1] /= stack[top]; continue;
-			case odd: stack[top-1] = stack[top-1] & 1; continue;
-			case eq: --top;  stack[top-1] = (stack[top-1] == stack[top]); continue;
-			case ls: --top;  stack[top-1] = (stack[top-1] < stack[top]); continue;
-			case gr: --top;  stack[top-1] = (stack[top-1] > stack[top]); continue;
-			case neq: --top;  stack[top-1] = (stack[top-1] != stack[top]); continue;
-			case lseq: --top;  stack[top-1] = (stack[top-1] <= stack[top]); continue;
-			case greq: --top;  stack[top-1] = (stack[top-1] >= stack[top]); continue;
+			case neg: stack[top - 1] = -stack[top - 1]; continue;
+			case add: --top;  stack[top - 1] += stack[top]; continue;
+			case sub: --top; stack[top - 1] -= stack[top]; continue;
+			case mul: --top;  stack[top - 1] *= stack[top];  continue;
+			case div: --top;  stack[top - 1] /= stack[top]; continue;
+			case odd: stack[top - 1] = stack[top - 1] & 1; continue;
+			case eq: --top;  stack[top - 1] = (stack[top - 1] == stack[top]); continue;
+			case ls: --top;  stack[top - 1] = (stack[top - 1] < stack[top]); continue;
+			case gr: --top;  stack[top - 1] = (stack[top - 1] > stack[top]); continue;
+			case neq: --top;  stack[top - 1] = (stack[top - 1] != stack[top]); continue;
+			case lseq: --top;  stack[top - 1] = (stack[top - 1] <= stack[top]); continue;
+			case greq: --top;  stack[top - 1] = (stack[top - 1] >= stack[top]); continue;
 			case wrt: printf("%d ", stack[--top]); continue;
 			case wrl: printf("\n"); continue;
 			}
 		case loda:
-			--top;
-			stack[top] = stack[display[i.u.addr.level] + i.u.addr.addr + stack[--top]];
+			stack[top - 1] = stack[display[i.u.addr.level] + i.u.addr.addr + stack[top - 1]];
 			break;
 		case stoa:
 			--top;
-			stack[display[i.u.addr.level] + i.u.addr.addr + stack[--top]] = stack[top];
+			stack[display[i.u.addr.level] + i.u.addr.addr + stack[top - 1]] = stack[top];
+			--top;
 			break;
 		}
 	} while (pc != 0);
