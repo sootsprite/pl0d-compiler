@@ -1,5 +1,6 @@
 /********** getSource.c **********/
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "getSource.h"
 
@@ -44,6 +45,7 @@ static struct keyWd KeyWdT[] = {
 	{"then", Then},
 	{"else", Else},
 	{"unless", Unless},
+	{"for", For},
 	{"while", While},
 	{"do", Do},
 	{"repeat", Repeat},

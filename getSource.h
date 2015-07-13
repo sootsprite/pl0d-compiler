@@ -12,7 +12,7 @@
 typedef enum keys {
 	Begin, End,                     /* 予約語の名前 */
 	If, Then, Else,
-	Unless,
+	Unless, For,
 	While, Do,
 	Repeat, Until,
 	Ret, Func,

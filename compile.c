@@ -209,6 +209,7 @@ void statement()
 	int tIndex;
 	KindT k;
 	int backP, backP2;    /* バックパッチ用 */
+	int backP3, backP4;
 
 	while(1) {
 		switch (token.kind) {
@@ -246,6 +247,24 @@ void statement()
 			backPatch(backP);                         /* 上のjpc命令にバックパッチ */
 			statement();                              /* 文のコンパイル */
 			backPatch(backP2);                        /* 上のjmp命令にバックパッチ */
+			return;
+		case For:
+			token = nextToken();
+			statement();
+			token = checkGet(token, Semicolon);
+			backP4 = nextCode();
+			condition();
+			backP2 = genCodeV(jpc, 0);
+			token = checkGet(token, Semicolon);
+			backP = genCodeV(jmp, 0);
+			backP3 = nextCode();
+			statement();  // increment
+			genCodeV(jmp, backP4);
+			backPatch(backP);
+			token = checkGet(token, Do);
+			statement();
+			genCodeV(jmp, backP3);
+			backPatch(backP2);
 			return;
 		case Ret:                                     /* return文のコンパイル */
 			token = nextToken();
@@ -327,6 +346,7 @@ int isStBeginKey(Token t)
 	switch (t.kind) {
 	case Begin:
 	case Do:
+	case For:
 	case Id:
 	case If:
 	case Repeat:
