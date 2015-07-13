@@ -1,8 +1,9 @@
-var x;
+var sum;
+var i;
 begin
-  for x := 0; x < 10; x := x+1 do
-  begin
-    write x;
-    writeln;
-  end
+  sum := 0;
+  for i := 0; i <= 100; i := i + 1 do
+    sum := sum + i;
+  write sum;
+  writeln;
 end.
