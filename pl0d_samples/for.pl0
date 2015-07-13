@@ -1,0 +1,8 @@
+var x;
+begin
+  for x := 0; x < 10; x := x+1 do
+  begin
+    write x;
+    writeln;
+  end
+end.
