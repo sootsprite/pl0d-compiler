@@ -1,0 +1,29 @@
+var check1;
+var a[10];
+var i;
+var check2;
+
+begin
+  check1 := 1234;
+  check2 := 4321;
+
+  i := 0;
+  while i < 10 do
+  begin
+    a[i] := i;
+    i := i + 1
+  end;
+
+  i := 0;
+  while i < 10 do
+  begin
+    write a[i];
+    writeln;
+    i := i + 1
+  end;
+
+  write check1;
+  writeln;
+  write check2;
+  writeln
+end.
