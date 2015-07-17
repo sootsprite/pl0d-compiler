@@ -12,17 +12,21 @@
 typedef enum keys {
 	Begin, End,                     /* 予約語の名前 */
 	If, Then, Else,
-	Unless, For,
+	Unless,
 	While, Do,
 	Repeat, Until,
-	Ret, Func,
-	Var, Const, Odd,
+	For,
+	Func,
 	Proc,
+	Call,
+	Ret,
+	Var, Const, Odd,
 	Write, WriteLn,
 	end_of_KeyWd,                   /* 予約語の名前はここまで */
 	Plus, Minus,                    /* 演算子と区切り記号の名前 */
 	Mult, Div,
 	Lparen, Rparen,
+	Lbracket, Rbracket,
 	Equal, Lss, Gtr,
 	NotEq, LssEq, GtrEq,
 	Comma, Period, Semicolon,

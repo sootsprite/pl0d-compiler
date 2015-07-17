@@ -39,44 +39,47 @@ struct keyWd {
 
 /* 予約語や記号と名前(KeyId)の表 */
 static struct keyWd KeyWdT[] = {
-	{"begin", Begin},
-	{"end", End},
-	{"if", If},
-	{"then", Then},
-	{"else", Else},
-	{"unless", Unless},
-	{"for", For},
-	{"while", While},
-	{"do", Do},
-	{"repeat", Repeat},
-	{"until", Until},
-	{"return", Ret},
-	{"function", Func},
-	{"var", Var},
-	{"const", Const},
-	{"odd", Odd},
-	{"procedure", Proc},
-	{"write", Write},
-	{"writeln",WriteLn},
-	{"$dummy1",end_of_KeyWd},
+	{ "begin", Begin },
+	{ "end", End },
+	{ "if", If },
+	{ "then", Then },
+	{ "else", Else },
+	{ "unless", Unless },
+	{ "while", While },
+	{ "do", Do },
+	{ "repeat", Repeat },
+	{ "until", Until },
+	{ "for", For },
+	{ "function", Func },
+	{ "procedure", Proc },
+	{ "call", Call },
+	{ "return", Ret },
+	{ "var", Var },
+	{ "const", Const },
+	{ "odd", Odd },
+	{ "write", Write },
+	{ "writeln",WriteLn },
+	{ "$dummy1",end_of_KeyWd },
 	/* 記号と名前(KeyId)の表 */
-	{"+", Plus},
-	{"-", Minus},
-	{"*", Mult},
-	{"/", Div},
-	{"(", Lparen},
-	{")", Rparen},
-	{"=", Equal},
-	{"<", Lss},
-	{">", Gtr},
-	{"<>", NotEq},
-	{"<=", LssEq},
-	{">=", GtrEq},
-	{",", Comma},
-	{".", Period},
-	{";", Semicolon},
-	{":=", Assign},
-	{"$dummy2",end_of_KeySym}
+	{ "+", Plus },
+	{ "-", Minus },
+	{ "*", Mult },
+	{ "/", Div },
+	{ "(", Lparen },
+	{ ")", Rparen },
+	{ "[", Lbracket },
+	{ "]", Rbracket },
+	{ "=", Equal },
+	{ "<", Lss },
+	{ ">", Gtr },
+	{ "<>", NotEq },
+	{ "<=", LssEq },
+	{ ">=", GtrEq },
+	{ ",", Comma },
+	{ ".", Period },
+	{ ";", Semicolon },
+	{ ":=", Assign },
+	{ "$dummy2",end_of_KeySym }
 };
 
 /* キーkは予約語か? */
@@ -111,10 +114,12 @@ static void initCharClassT()
 	charClassT['+'] = Plus; charClassT['-'] = Minus;
 	charClassT['*'] = Mult; charClassT['/'] = Div;
 	charClassT['('] = Lparen; charClassT[')'] = Rparen;
+	charClassT['['] = Lbracket; charClassT[']'] = Rbracket;
 	charClassT['='] = Equal; charClassT['<'] = Lss;
 	charClassT['>'] = Gtr; charClassT[','] = Comma;
 	charClassT['.'] = Period; charClassT[';'] = Semicolon;
 	charClassT[':'] = colon;
+	charClassT['_'] = letter;
 }
 
 /* ソースファイルのopen */
@@ -369,6 +374,7 @@ void errorDelete()
 		fprintf(fptex, "<FONT COLOR=%s>%d</FONT>", DELETE_C, cToken.u.value);
 	}
 #endif
+	errorNoCheck();
 }
 
 /* エラーメッセージを.html(または.tex)ファイルに出力 */
@@ -595,7 +601,7 @@ void printcToken()
 	}
 	/* Identfier */
 	else if (i == (int)Id) {
-		switch (idKind) {
+		switch ( idKind ) {
 		case varId:
 			fprintf(fptex, "%s", cToken.u.id);
 			return;
@@ -624,8 +630,8 @@ void printcToken()
 		fprintf(fptex, "(Symbol, '%s') ", KeyWdT[i].word);
 	}
 	/* Identfier */
-	else if (i==(int)Id) {
-		switch (idKind) {
+	else if (i == (int)Id) {
+		switch ( idKind ) {
 		case varId:
 			fprintf(fptex, "(varId, '%s') ", cToken.u.id);
 			return;
@@ -655,7 +661,7 @@ void printcToken()
 	}
 	/* Identfier */
 	else if (i == (int)Id) {
-		switch (idKind) {
+		switch ( idKind ) {
 		case varId:
 			fprintf(fptex, "%s", cToken.u.id);
 			return;
