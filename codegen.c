@@ -60,13 +60,13 @@ int genCodeO(Operator p)
 }
 
 /* ret命令語の生成 */
-int genCodeR()
+int genCodeR(int forProc)
 {
 	/* 直前がretなら生成せず */
 	if (code[cIndex].opCode == ret)
 		return cIndex;
 	checkMax();
-	code[cIndex].opCode = ret;
+	code[cIndex].opCode = forProc ? retp : ret;
 	code[cIndex].u.addr.level = bLevel();
 	code[cIndex].u.addr.addr = fPars();    /* パラメタ数(実行スタックの解放用)*/
 	return cIndex;
@@ -119,6 +119,9 @@ void updateRef(int i)
 	case ict: flag = 1; break;
 	case jmp: flag = 4; break;
 	case jpc: flag = 4; break;
+	case loda: flag = 2; break;
+	case stoa: flag = 2; break;
+	case retp: flag = 2; break;
 	}
 	switch(flag) {
 	case 1:
@@ -168,6 +171,7 @@ void printCode(int i)
 	case jpc: printf("jpc"); flag = 4; break;
 	case loda: printf("loda"); flag = 2; break;
 	case stoa: printf("stoa"); flag = 2; break;
+	case retp: printf("retp"); flag = 2; break;
 	}
 	switch(flag) {
 	case 1:
@@ -276,8 +280,13 @@ void execute()
 			break;
 		case stoa:
 			--top;
-			stack[display[i.u.addr.level] + i.u.addr.addr + stack[top - 1]] = stack[top];
-			--top;
+			stack[display[i.u.addr.level] + i.u.addr.addr + stack[top - 1]] = stack[top--];
+			break;
+		case retp:
+			top = display[i.u.addr.level];                /* topを呼ばれたときの値に戻す */
+			display[i.u.addr.level] = stack[top];         /* 壊したディスプレイの回復 */
+			pc = stack[top + 1];
+			top -= i.u.addr.addr;                         /* 実引数の分だけトップを戻す */
 			break;
 		}
 	} while (pc != 0);

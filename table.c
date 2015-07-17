@@ -6,6 +6,8 @@
 #define MAXNAME  31     /* 名前の最大長さ */
 #define MAXLEVEL 5      /* ブロックの最大深さ */
 
+extern char *strcpy(char *s1, const char *s2);
+
 /* 名前表のエントリーの型 */
 typedef struct tableE {
 	KindT kind;               /* 名前の種類 */
@@ -71,31 +73,49 @@ int bLevel()
 	return level;
 }
 
+/* 現プロックが関数内か手続き内か */
+int inProcedureBlock()
+{
+	return nameTable[index[level - 1]].kind == procId;
+}
+
 /* 現ブロックの関数のパラメタ数を返す */
 int fPars()
 {
-	return nameTable[index[level-1]].u.f.pars;
+	return nameTable[index[level - 1]].u.f.pars;
+}
+
+/* 名前表に関数や手続きを登録 */
+static int enterTsequence(char *id, int v, KindT kind)
+{
+	enterT(id);
+	nameTable[tIndex].kind = kind;
+	nameTable[tIndex].u.f.raddr.level = level;
+	nameTable[tIndex].u.f.raddr.addr = v;    /* 関数の先頭番地 */
+	nameTable[tIndex].u.f.pars = 0;          /* パラメタ数の初期値 */
+	tfIndex = tIndex;
+	return tIndex;
 }
 
 /* 名前表に名前を登録 */
 void enterT(char *id)
 {
-	if (tIndex++ < MAXTABLE){
+	if (tIndex++ < MAXTABLE)
 		strcpy(nameTable[tIndex].name, id);
-	} else
+	else
 		errorF("too many names");
 }
 
 /* 名前表に関数名と先頭番地を登録 */
 int enterTfunc(char *id, int v)
 {
-	enterT(id);
-	nameTable[tIndex].kind = funcId;
-	nameTable[tIndex].u.f.raddr.level = level;
-	nameTable[tIndex].u.f.raddr.addr = v;    /* 関数の先頭番地 */
-	nameTable[tIndex].u.f.pars = 0;          /* パラメタ数の初期値 */
-	tfIndex = tIndex;
-	return tIndex;
+	return enterTsequence(id, v, funcId);
+}
+
+/* 名前表に手続き名と先頭番地を登録 */
+int enterTproc(char *id, int v)
+{
+	return enterTsequence(id, v, procId);
 }
 
 /* 名前表にパラメタ名を登録 */
@@ -155,7 +175,7 @@ int searchT(char *id, KindT k)
 		return i;
 	else {                            /* 名前がなかった */
 		errorType("undef");
-		if (k==varId)
+		if (k == varId)
 			return enterTvar(id);     /* 変数の時は仮登録 */
 		return 0;
 	}
@@ -191,3 +211,8 @@ int frameL()
 	return localAddr;
 }
 
+/* 次に割り当てられるアドレスをn番地先に進める */
+void forwardAllocatedAddr(int n)
+{
+	localAddr += n;
+}
