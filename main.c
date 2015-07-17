@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 		/* pl0d src */
 		if (!openSource(argv[1]))
 			return;
-		if (compile()){
+		if (compile()) {
 			execute();
 		}
 		/* ソースプログラムファイルのclose */
@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 		/* pl0d -l src */
 		if (!openSource(argv[2]))
 			return;
-		if (compile()){
+		if (compile()) {
 			listCode();
 		}
 		/* ソースプログラムファイルのclose */
