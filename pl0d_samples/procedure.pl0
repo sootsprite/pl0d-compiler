@@ -1,14 +1,29 @@
+var count;
+
+procedure increment_count()
+begin
+  count := count + 1;
+  write count
+end;
+
 procedure print_whether_even_or_not(n)
 begin
   if odd n then
-    write 0;
+    write 0
   else
-    write 1
+    write 1;
+  writeln;
+  return
 end;
 
 begin
-  call print_whether_even_or_not(0)
-  call print_whether_even_or_not(1)
-  call print_whether_even_or_not(2)
-  call print_whether_even_or_not(3)
+  count := 0;
+  call increment_count();
+  call print_whether_even_or_not(count);
+  call increment_count();
+  call print_whether_even_or_not(count);
+  call increment_count();
+  call print_whether_even_or_not(count);
+  call increment_count();
+  call print_whether_even_or_not(count);
 end.
